@@ -1,0 +1,50 @@
+# config.yaml
+# Configuration for Shelly Cloud API Status Logger
+
+# Shelly Cloud API Configuration
+# Get these from Shelly App > User Settings > Authorization cloud key
+shelly_cloud:
+  server_uri: "shelly-103-eu.shelly.cloud"  # Example: shelly-103-eu.shelly.cloud
+  auth_key: "your-auth-key-here"  # Your authorization cloud key
+
+# InfluxDB Configuration
+influxdb:
+  url: "http://localhost:8086"
+  token: "your-influxdb-token"
+  org: "your-org"
+  bucket: "shelly_status"
+
+# Polling interval in minutes (minimum 5 recommended due to API rate limits)
+poll_interval: 5
+
+# List of Shelly devices to monitor
+# Get device IDs from Shelly App > Device > Settings > Device Information > Device Id
+devices:
+  - name: "pump"
+    id: "a8032abe41fc"  # Device ID (hexadecimal)
+    type: "plus1pm"
+    channel: 0  # Channel number (0 for single-channel devices)
+    
+  - name: "heater"
+    id: "b48a0a1cd978"
+    type: "plus1pm"
+    channel: 0
+    
+  - name: "garage_door"
+    id: "c5b9f1e3d865"
+    type: "plus2pm"
+    channel: 0
+    
+  # Multi-channel device example
+  - name: "hallway_light"
+    id: "d7c4e2f5a912"
+    type: "plus2pm"
+    channel: 1  # Second channel
+    
+  # Add more devices here...
+
+# Notes:
+# - Device ID is shown in hexadecimal format in the Shelly App
+# - For multi-channel devices (Plus 2PM, Pro 2PM), specify which channel to monitor
+# - Shelly Cloud API is rate-limited to 1 request/second
+# - The script automatically adds 1.1 second delay between device polls

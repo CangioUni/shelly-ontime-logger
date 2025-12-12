@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  shelly-cloud-logger:
+    build:
+      context: .
+      dockerfile: Dockerfile_cloud
+    container_name: shelly-cloud-logger
+    restart: unless-stopped
+    environment:
+      # Shelly Cloud API Configuration
+      - SHELLY_SERVER_URI=${SHELLY_SERVER_URI}
+      - SHELLY_AUTH_KEY=${SHELLY_AUTH_KEY}
+      
+      # InfluxDB Configuration
+      - INFLUXDB_URL=${INFLUXDB_URL:-http://influxdb:8086}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET:-shelly_status}
+      
+      # Poll interval in minutes
+      - POLL_INTERVAL=${POLL_INTERVAL:-5}
+      
+    volumes:
+      - ./config_cloud.yaml:/app/config.yaml:ro
+    
+    # No need for host network mode since we're using cloud API
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    external: true
