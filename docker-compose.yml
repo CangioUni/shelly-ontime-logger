@@ -4,7 +4,7 @@ services:
   shelly-cloud-logger:
     build:
       context: .
-      dockerfile: Dockerfile_cloud
+      dockerfile: Dockerfile
     container_name: shelly-cloud-logger
     restart: unless-stopped
     environment:

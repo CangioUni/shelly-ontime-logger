@@ -90,8 +90,8 @@ class ShellyCloudStatusLogger:
         result = {
             'online': device_status.get('online', 0) == 1,
             'output': False,
-            'power': 0,
-            'energy': 0,
+            'power': 0.0,
+            'energy': 0.0,
             'voltage': None,
             'current': None,
             'temperature': None
@@ -108,13 +108,13 @@ class ShellyCloudStatusLogger:
         if channel_key in status:
             switch_data = status[channel_key]
             result['output'] = switch_data.get('output', False)
-            result['power'] = switch_data.get('apower', 0)
+            result['power'] = float(switch_data.get('apower', 0.0))
             result['voltage'] = switch_data.get('voltage', None)
             result['current'] = switch_data.get('current', None)
             
             # Energy data
             aenergy = switch_data.get('aenergy', {})
-            result['energy'] = aenergy.get('total', 0)
+            result['energy'] = float(aenergy.get('total', 0.0))
             
             # Temperature
             temp_data = switch_data.get('temperature', {})
@@ -131,8 +131,8 @@ class ShellyCloudStatusLogger:
             meters = status.get('meters', [])
             if channel < len(meters):
                 meter_data = meters[channel]
-                result['power'] = meter_data.get('power', 0)
-                result['energy'] = meter_data.get('total', 0)
+                result['power'] = float(meter_data.get('power', 0.0))
+                result['energy'] = float(meter_data.get('total', 0.0))
             
             # Gen 1 temperature
             if 'tmp' in status:
@@ -143,7 +143,7 @@ class ShellyCloudStatusLogger:
             cover_data = status['cover:0']
             # For covers, we consider "open" as ON
             result['output'] = cover_data.get('state', 'stopped') == 'open'
-            result['power'] = cover_data.get('apower', 0)
+            result['power'] = float(cover_data.get('apower', 0.0))
         
         # Try light if neither switch nor cover found
         elif 'light:0' in status:
