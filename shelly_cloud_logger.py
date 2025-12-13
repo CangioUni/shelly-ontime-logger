@@ -51,11 +51,7 @@ class ShellyCloudStatusLogger:
             
             payload = {
                 "ids": [device_id],
-                "select": ["status"],
-                "pick": {
-                    "status": ["switch:0", "switch:1", "switch:2", "switch:3",  # Multi-channel support
-                              "cover:0", "light:0", "sys", "cloud"]
-                }
+                "select": ["status"]
             }
             
             response = requests.post(
@@ -125,6 +121,23 @@ class ShellyCloudStatusLogger:
             if temp_data:
                 result['temperature'] = temp_data.get('tC', None)
         
+        # Try Gen 1 relays/meters
+        elif 'relays' in status:
+            relays = status.get('relays', [])
+            if channel < len(relays):
+                relay_data = relays[channel]
+                result['output'] = relay_data.get('ison', False)
+
+            meters = status.get('meters', [])
+            if channel < len(meters):
+                meter_data = meters[channel]
+                result['power'] = meter_data.get('power', 0)
+                result['energy'] = meter_data.get('total', 0)
+
+            # Gen 1 temperature
+            if 'tmp' in status:
+                result['temperature'] = status['tmp'].get('tC', None)
+
         # Try cover (roller) if switch not found
         elif 'cover:0' in status:
             cover_data = status['cover:0']
