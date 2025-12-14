@@ -108,18 +108,24 @@ class ShellyCloudStatusLogger:
         if channel_key in status:
             switch_data = status[channel_key]
             result['output'] = switch_data.get('output', False)
-            result['power'] = float(switch_data.get('apower', 0.0))
-            result['voltage'] = switch_data.get('voltage', None)
-            result['current'] = switch_data.get('current', None)
+
+            # Use safe float conversion
+            apower = switch_data.get('apower')
+            result['power'] = float(apower) if apower is not None else 0.0
+
+            result['voltage'] = float(switch_data['voltage']) if switch_data.get('voltage') is not None else None
+            result['current'] = float(switch_data['current']) if switch_data.get('current') is not None else None
             
             # Energy data
             aenergy = switch_data.get('aenergy', {})
-            result['energy'] = float(aenergy.get('total', 0.0))
+            total_energy = aenergy.get('total')
+            result['energy'] = float(total_energy) if total_energy is not None else 0.0
             
             # Temperature
             temp_data = switch_data.get('temperature', {})
             if temp_data:
-                result['temperature'] = temp_data.get('tC', None)
+                tC = temp_data.get('tC')
+                result['temperature'] = float(tC) if tC is not None else None
         
         # Try Gen 1 relays/meters
         elif 'relays' in status:
@@ -136,7 +142,8 @@ class ShellyCloudStatusLogger:
 
             # Gen 1 temperature
             if 'tmp' in status:
-                result['temperature'] = status['tmp'].get('tC', None)
+                tC = status['tmp'].get('tC')
+                result['temperature'] = float(tC) if tC is not None else None
 
         # Try cover (roller) if switch not found
         elif 'cover:0' in status:
