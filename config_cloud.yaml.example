@@ -17,31 +17,34 @@ influxdb:
 # Polling interval in minutes (minimum 5 recommended due to API rate limits)
 poll_interval: 5
 
-# List of Shelly devices to monitor
-# Get device IDs from Shelly App > Device > Settings > Device Information > Device Id
-devices:
-  - name: "pump"
-    id: "a8032abe41fc"  # Device ID (hexadecimal)
-    type: "plus1pm"
-    channel: 0  # Channel number (0 for single-channel devices)
-    
-  - name: "heater"
-    id: "b48a0a1cd978"
-    type: "plus1pm"
-    channel: 0
-    
-  - name: "garage_door"
-    id: "c5b9f1e3d865"
-    type: "plus2pm"
-    channel: 0
-    
-  # Multi-channel device example
-  - name: "hallway_light"
-    id: "d7c4e2f5a912"
-    type: "plus2pm"
-    channel: 1  # Second channel
-    
-  # Add more devices here...
+# Device Groups Configuration
+# You can group devices and assign them to specific InfluxDB buckets
+groups:
+  - bucket: "shelly_ground_floor"
+    devices:
+      - name: "pump"
+        id: "a8032abe41fc"  # Device ID (hexadecimal)
+        type: "plus1pm"
+        channel: 0  # Channel number (0 for single-channel devices)
+
+      - name: "heater"
+        id: "b48a0a1cd978"
+        type: "plus1pm"
+        channel: 0
+
+  - bucket: "shelly_first_floor"
+    devices:
+      - name: "hallway_light"
+        id: "d7c4e2f5a912"
+        type: "plus2pm"
+        channel: 1  # Second channel
+
+# Legacy configuration (optional, uses default bucket)
+# devices:
+#   - name: "garage_door"
+#     id: "c5b9f1e3d865"
+#     type: "plus2pm"
+#     channel: 0
 
 # Notes:
 # - Device ID is shown in hexadecimal format in the Shelly App

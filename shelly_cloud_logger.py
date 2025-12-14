@@ -38,7 +38,7 @@ class ShellyCloudStatusLogger:
             org=config['influxdb']['org']
         )
         self.write_api = self.client.write_api(write_options=SYNCHRONOUS)
-        self.bucket = config['influxdb']['bucket']
+        self.default_bucket = config['influxdb']['bucket']
         self.devices = config['devices']
         
     def get_device_status_v2(self, device_id):
@@ -167,6 +167,8 @@ class ShellyCloudStatusLogger:
         # Get status from Shelly Cloud
         device_status = self.get_device_status_v2(device_id)
         
+        bucket = device.get('bucket', self.default_bucket)
+
         if device_status is None:
             logger.warning(f"Failed to get status for {device_name} ({device_id})")
             # Log offline status
@@ -178,7 +180,7 @@ class ShellyCloudStatusLogger:
                 .field("cloud_accessible", False) \
                 .time(datetime.utcnow())
             
-            self.write_api.write(bucket=self.bucket, record=point)
+            self.write_api.write(bucket=bucket, record=point)
             return
         
         # Parse the status
@@ -211,7 +213,7 @@ class ShellyCloudStatusLogger:
         point.time(datetime.utcnow())
         
         try:
-            self.write_api.write(bucket=self.bucket, record=point)
+            self.write_api.write(bucket=bucket, record=point)
             online_str = "online" if status['online'] else "offline"
             output_str = "ON" if status['output'] else "OFF"
             logger.info(f"✓ {device_name} ({online_str}): {output_str} ({status['power']:.1f}W)")
@@ -251,43 +253,20 @@ def load_config():
             'poll_interval': 5
         }
     
-    # Shelly Cloud configuration (override with env vars if set and not empty)
-    env_server_uri = os.getenv('SHELLY_SERVER_URI')
-    if env_server_uri:
-        config['shelly_cloud']['server_uri'] = env_server_uri
-    elif 'server_uri' not in config['shelly_cloud']:
-        config['shelly_cloud']['server_uri'] = ''
+    # Defaults if missing in config file
+    if 'server_uri' not in config.get('shelly_cloud', {}):
+        config.setdefault('shelly_cloud', {})['server_uri'] = ''
+    if 'auth_key' not in config.get('shelly_cloud', {}):
+        config.setdefault('shelly_cloud', {})['auth_key'] = ''
 
-    env_auth_key = os.getenv('SHELLY_AUTH_KEY')
-    if env_auth_key:
-        config['shelly_cloud']['auth_key'] = env_auth_key
-    elif 'auth_key' not in config['shelly_cloud']:
-        config['shelly_cloud']['auth_key'] = ''
-    
-    # InfluxDB configuration (override with env vars if set and not empty)
-    env_influx_url = os.getenv('INFLUXDB_URL')
-    if env_influx_url:
-        config['influxdb']['url'] = env_influx_url
-    elif 'url' not in config['influxdb']:
-        config['influxdb']['url'] = 'http://localhost:8086'
-
-    env_influx_token = os.getenv('INFLUXDB_TOKEN')
-    if env_influx_token:
-        config['influxdb']['token'] = env_influx_token
-    elif 'token' not in config['influxdb']:
-        config['influxdb']['token'] = ''
-
-    env_influx_org = os.getenv('INFLUXDB_ORG')
-    if env_influx_org:
-        config['influxdb']['org'] = env_influx_org
-    elif 'org' not in config['influxdb']:
-        config['influxdb']['org'] = ''
-
-    env_influx_bucket = os.getenv('INFLUXDB_BUCKET')
-    if env_influx_bucket:
-        config['influxdb']['bucket'] = env_influx_bucket
-    elif 'bucket' not in config['influxdb']:
-        config['influxdb']['bucket'] = 'shelly_status'
+    if 'url' not in config.get('influxdb', {}):
+        config.setdefault('influxdb', {})['url'] = 'http://localhost:8086'
+    if 'token' not in config.get('influxdb', {}):
+        config.setdefault('influxdb', {})['token'] = ''
+    if 'org' not in config.get('influxdb', {}):
+        config.setdefault('influxdb', {})['org'] = ''
+    if 'bucket' not in config.get('influxdb', {}):
+        config.setdefault('influxdb', {})['bucket'] = 'shelly_status'
     
     env_poll_interval = os.getenv('POLL_INTERVAL')
     if env_poll_interval:
@@ -295,6 +274,20 @@ def load_config():
     elif 'poll_interval' not in config:
         config['poll_interval'] = 5
     
+    # Handle groups if present and flatten to devices list
+    if config.get('groups'):
+        if not config.get('devices'):
+            config['devices'] = []
+
+        for group in config['groups']:
+            group_bucket = group.get('bucket')
+            for device in group.get('devices', []):
+                # Copy the device dict to avoid modifying the original
+                dev_config = device.copy()
+                if group_bucket:
+                    dev_config['bucket'] = group_bucket
+                config['devices'].append(dev_config)
+
     return config
 
 
@@ -309,7 +302,7 @@ def main():
     
     # Validate configuration
     if not config.get('devices'):
-        logger.error("No devices configured! Please add devices to config.yaml")
+        logger.error("No devices configured! Please add devices or groups to config.yaml")
         return
     
     if not config['shelly_cloud'].get('auth_key'):
