@@ -251,24 +251,49 @@ def load_config():
             'poll_interval': 5
         }
     
-    # Shelly Cloud configuration (override with env vars)
-    config['shelly_cloud']['server_uri'] = os.getenv('SHELLY_SERVER_URI', 
-                                                     config.get('shelly_cloud', {}).get('server_uri', ''))
-    config['shelly_cloud']['auth_key'] = os.getenv('SHELLY_AUTH_KEY', 
-                                                   config.get('shelly_cloud', {}).get('auth_key', ''))
+    # Shelly Cloud configuration (override with env vars if set and not empty)
+    env_server_uri = os.getenv('SHELLY_SERVER_URI')
+    if env_server_uri:
+        config['shelly_cloud']['server_uri'] = env_server_uri
+    elif 'server_uri' not in config['shelly_cloud']:
+        config['shelly_cloud']['server_uri'] = ''
+
+    env_auth_key = os.getenv('SHELLY_AUTH_KEY')
+    if env_auth_key:
+        config['shelly_cloud']['auth_key'] = env_auth_key
+    elif 'auth_key' not in config['shelly_cloud']:
+        config['shelly_cloud']['auth_key'] = ''
     
-    # InfluxDB configuration (override with env vars)
-    config['influxdb']['url'] = os.getenv('INFLUXDB_URL', 
-                                          config.get('influxdb', {}).get('url', 'http://localhost:8086'))
-    config['influxdb']['token'] = os.getenv('INFLUXDB_TOKEN', 
-                                            config.get('influxdb', {}).get('token', ''))
-    config['influxdb']['org'] = os.getenv('INFLUXDB_ORG', 
-                                          config.get('influxdb', {}).get('org', ''))
-    config['influxdb']['bucket'] = os.getenv('INFLUXDB_BUCKET', 
-                                             config.get('influxdb', {}).get('bucket', 'shelly_status'))
+    # InfluxDB configuration (override with env vars if set and not empty)
+    env_influx_url = os.getenv('INFLUXDB_URL')
+    if env_influx_url:
+        config['influxdb']['url'] = env_influx_url
+    elif 'url' not in config['influxdb']:
+        config['influxdb']['url'] = 'http://localhost:8086'
+
+    env_influx_token = os.getenv('INFLUXDB_TOKEN')
+    if env_influx_token:
+        config['influxdb']['token'] = env_influx_token
+    elif 'token' not in config['influxdb']:
+        config['influxdb']['token'] = ''
+
+    env_influx_org = os.getenv('INFLUXDB_ORG')
+    if env_influx_org:
+        config['influxdb']['org'] = env_influx_org
+    elif 'org' not in config['influxdb']:
+        config['influxdb']['org'] = ''
+
+    env_influx_bucket = os.getenv('INFLUXDB_BUCKET')
+    if env_influx_bucket:
+        config['influxdb']['bucket'] = env_influx_bucket
+    elif 'bucket' not in config['influxdb']:
+        config['influxdb']['bucket'] = 'shelly_status'
     
-    config['poll_interval'] = int(os.getenv('POLL_INTERVAL', 
-                                            config.get('poll_interval', 5)))
+    env_poll_interval = os.getenv('POLL_INTERVAL')
+    if env_poll_interval:
+        config['poll_interval'] = int(env_poll_interval)
+    elif 'poll_interval' not in config:
+        config['poll_interval'] = 5
     
     return config
 
