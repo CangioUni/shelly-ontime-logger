@@ -171,8 +171,8 @@ class ShellyCloudStatusLogger:
             logger.warning(f"Failed to get status for {device_name} ({device_id})")
             # Log offline status
             point = Point("shelly_status") \
-                .tag("device", device_name) \
-                .tag("device_id", device_id) \
+                .tag("equipment", device_name) \
+                .tag("device_uuid", device_id) \
                 .tag("type", device.get('type', 'unknown')) \
                 .field("online", False) \
                 .field("cloud_accessible", False) \
@@ -190,8 +190,8 @@ class ShellyCloudStatusLogger:
         
         # Create InfluxDB point
         point = Point("shelly_status") \
-            .tag("device", device_name) \
-            .tag("device_id", device_id) \
+            .tag("equipment", device_name) \
+            .tag("device_uuid", device_id) \
             .tag("type", device.get('type', 'unknown')) \
             .field("online", status['online']) \
             .field("cloud_accessible", True) \
@@ -212,20 +212,20 @@ class ShellyCloudStatusLogger:
         
         try:
             self.write_api.write(bucket=self.bucket, record=point)
-            online_str = "online" if status['online'] else "offline"
-            output_str = "ON" if status['output'] else "OFF"
-            logger.info(f"✓ {device_name} ({online_str}): {output_str} ({status['power']:.1f}W)")
+            # online_str = "online" if status['online'] else "offline"
+            # output_str = "ON" if status['output'] else "OFF"
+            # logger.info(f"✓ {device_name} ({online_str}): {output_str} ({status['power']:.1f}W)")
         except Exception as e:
             logger.error(f"Error writing to InfluxDB for {device_name}: {e}")
     
     def poll_all_devices(self):
         """Poll all configured devices"""
-        logger.info(f"Polling {len(self.devices)} devices via Shelly Cloud API...")
+        # logger.info(f"Polling {len(self.devices)} devices via Shelly Cloud API...")
         for device in self.devices:
             self.log_device_status(device)
             # Small delay to respect rate limits (1 req/sec)
             time.sleep(1.1)
-        logger.info("Polling complete")
+        # logger.info("Polling complete")
     
     def close(self):
         """Close InfluxDB connection"""
